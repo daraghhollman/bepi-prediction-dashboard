@@ -9,6 +9,7 @@ import planetary_coverage as pc
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.subplots
+import scipy.ndimage
 import spiceypy as spice
 import xarray as xr
 from planetary_coverage.spice import metakernel
@@ -81,7 +82,13 @@ def aberrate_position(position: list[float], date: dt.datetime | dt.date):
 
 
 def overlay_trajectory(
-    n_clicks, crossing_list_selection, spacecraft_selection, start_time, end_time
+    n_clicks,
+    crossing_list_selection,
+    spacecraft_selection,
+    start_time,
+    end_time,
+    grid_density,
+    temporal_density,
 ):
 
     if n_clicks == 0:
@@ -112,7 +119,7 @@ def overlay_trajectory(
     mk = pc.MetaKernel(metakernel_path, kernels=kernels_dir)
     with spice.KernelPool(mk):
 
-        resolution = dt.timedelta(minutes=1)
+        resolution = dt.timedelta(seconds=temporal_density)
         times = [
             start_time + i * resolution
             for i in range(round((end_time - start_time) / resolution))
@@ -203,9 +210,33 @@ def overlay_trajectory(
         region: np.zeros_like(x_data, dtype=float) for region in regions
     }
 
-    # In theory we should just save/load these params from the probability maps,
-    # but I can't be bothered to implement this at this point
-    bin_size = 0.25
+    # Interpolate if grid_density is not one
+    bin_size = (
+        selected_probability_map.coords["X"][1]
+        - selected_probability_map.coords["X"][0]
+    )
+
+    new_x_coords = np.arange(
+        selected_probability_map.coords["X"][0],
+        selected_probability_map.coords["X"][-1] + bin_size / grid_density,
+        bin_size / grid_density,
+    )
+    new_cyl_coords = np.arange(
+        selected_probability_map.coords["CYL"][0],
+        selected_probability_map.coords["CYL"][-1] + bin_size / grid_density,
+        bin_size / grid_density,
+    )
+
+    selected_probability_map = selected_probability_map.interp(
+        coords={"X": new_x_coords, "CYL": new_cyl_coords}
+    )
+
+    # Recalculate binsize
+    bin_size = (
+        selected_probability_map.coords["X"][1]
+        - selected_probability_map.coords["X"][0]
+    )
+
     x_bins = np.arange(-5, 5 + bin_size, bin_size)  # Radii
     cyl_bins = np.arange(0, 8 + bin_size, bin_size)  # Radii
 
@@ -240,16 +271,29 @@ def overlay_trajectory(
     ]
 
     # Plotting
-    fig = px.line(probabilities, x="Time", y=regions)
+    colours = ["#F0E442", "#E69F00", "#56B4E9"]
+    fig = px.line(probabilities, x="Time", y=regions, color_discrete_sequence=colours)
 
     fig.update_layout(template="simple_white")
 
     fig.update_yaxes(title_text="Region Probability")
 
+    # We want to save these time series to a tmp filepath
+    start_time = dt.datetime.strftime(start_time, "%Y%m%d_%H%M%S")
+    end_time = dt.datetime.strftime(end_time, "%Y%m%d_%H%M%S")
+
+    download_path = (
+        pathlib.Path(os.path.dirname(__file__))
+        / "tmp"
+        / f"{spacecraft_selection}_region_probabilities_{start_time}_{end_time}.csv"
+    )
+
+    probabilities.to_csv(download_path, index=False)
+
     return fig
 
 
-def load_probability_maps(dropdown_value):
+def load_probability_maps(dropdown_value, grid_density):
 
     match dropdown_value:
         case "Hollman+ 2025":
@@ -280,6 +324,24 @@ def load_probability_maps(dropdown_value):
             f"{region_name.replace(' ', "_").lower()}_mean"
         ].T
 
+        data.values[np.where(data.values == 0)] = np.nan
+
+        # Interpolate if grid_density is not one
+        bin_size = data.coords["X"][1] - data.coords["X"][0]
+
+        new_x_coords = np.arange(
+            data.coords["X"][0],
+            data.coords["X"][-1] + bin_size / grid_density,
+            bin_size / grid_density,
+        )
+        new_cyl_coords = np.arange(
+            data.coords["CYL"][0],
+            data.coords["CYL"][-1] + bin_size / grid_density,
+            bin_size / grid_density,
+        )
+
+        data = data.interp(coords={"X": new_x_coords, "CYL": new_cyl_coords})
+
         fig.add_trace(
             go.Heatmap(
                 z=data.values,
@@ -303,3 +365,29 @@ def load_probability_maps(dropdown_value):
         fig.update_layout(plot_bgcolor="lightgrey")
 
     return fig
+
+
+def download_time_series(n_clicks, spacecraft, start_time, end_time):
+    # Make sure times are formatted correctly
+    try:
+        start_time = dt.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        return
+
+    try:
+        end_time = dt.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        return
+
+    start_time = dt.datetime.strftime(start_time, "%Y%m%d_%H%M%S")
+    end_time = dt.datetime.strftime(end_time, "%Y%m%d_%H%M%S")
+
+    download_path = (
+        pathlib.Path(os.path.dirname(__file__))
+        / "tmp"
+        / f"{spacecraft}_region_probabilities_{start_time}_{end_time}.csv"
+    )
+
+    data = pd.read_csv(download_path)
+
+    return data, f"{spacecraft}_region_probabilities_{start_time}_{end_time}.csv"

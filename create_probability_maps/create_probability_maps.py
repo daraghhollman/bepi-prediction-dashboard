@@ -111,7 +111,8 @@ def main():
         region_maps[region]["Uncertainty"] /= map_totals
 
         # We also don't want 0 values as they obscure the low value data
-        region_maps[region]["Mean"][np.where(region_maps[region]["Mean"] == 0)] = np.nan
+        # We do this when we plot instead
+        # region_maps[region]["Mean"][np.where(region_maps[region]["Mean"] == 0)] = np.nan
 
     # The cleanest way to save these data is as a netcdf file.
 
