@@ -69,22 +69,6 @@ app.layout = dash.html.Div(
         ),
         dash.html.Button("Predict", id="predict-button"),
         dash.html.Div(
-            dash.dcc.Slider(
-                min=10,
-                max=120,
-                step=1,
-                value=60,
-                id="temporal-density",
-                marks=None,
-                tooltip={
-                    "always_visible": True,
-                    "placement": "bottom",
-                    "template": "Temporal Cadence: {value} second(s)",
-                },
-            ),
-            style={"width": "30pc"},
-        ),
-        dash.html.Div(
             [
                 dash.html.H4("Trajectory Overlay"),
                 dash.dcc.Graph(id="trajectory_overlay", mathjax=True),
@@ -115,7 +99,6 @@ def load_probability_maps(dropdown_value, grid_density):
     dash.State("start_time", "value"),
     dash.State("end_time", "value"),
     dash.Input("smooth-density", "value"),
-    dash.Input("temporal-density", "value"),
 )
 def overlay_trajectory(
     n_clicks,
@@ -124,7 +107,6 @@ def overlay_trajectory(
     start_time,
     end_time,
     smooth_density,
-    temporal_density,
 ):
     return backend.overlay_trajectory(
         n_clicks,
@@ -133,7 +115,6 @@ def overlay_trajectory(
         start_time,
         end_time,
         smooth_density,
-        temporal_density,
     )
 
 

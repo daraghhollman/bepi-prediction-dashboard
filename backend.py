@@ -88,7 +88,6 @@ def overlay_trajectory(
     start_time,
     end_time,
     grid_density,
-    temporal_density,
 ):
 
     if n_clicks == 0:
@@ -119,7 +118,7 @@ def overlay_trajectory(
     mk = pc.MetaKernel(metakernel_path, kernels=kernels_dir)
     with spice.KernelPool(mk):
 
-        resolution = dt.timedelta(seconds=temporal_density)
+        resolution = dt.timedelta(seconds=60)
         times = [
             start_time + i * resolution
             for i in range(round((end_time - start_time) / resolution))
