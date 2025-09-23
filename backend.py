@@ -365,9 +365,11 @@ def load_probability_maps(dropdown_value, grid_density):
         fig.update_layout(plot_bgcolor="lightgrey")
 
         # Force equal aspect
-        fig.update_layout(
-            xaxis=dict(scaleanchor="y"),
-            yaxis=dict(scaleanchor="x"),
+        fig.update_yaxes(
+            scaleanchor=f"x{i+1}",
+            scaleratio=1,
+            row=1,
+            col=i + 1,
         )
 
     return fig
