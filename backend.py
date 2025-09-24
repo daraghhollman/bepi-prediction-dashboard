@@ -1,8 +1,11 @@
 import datetime as dt
+import itertools
 import os
 import pathlib
 
 import hermpy.utils
+import matplotlib.colors
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import planetary_coverage as pc
@@ -81,7 +84,7 @@ def aberrate_position(position: list[float], date: dt.datetime | dt.date):
     return rotated_position
 
 
-def overlay_trajectory(
+def bepi_probabilities(
     n_clicks,
     crossing_list_selection,
     spacecraft_selection,
@@ -118,7 +121,7 @@ def overlay_trajectory(
     mk = pc.MetaKernel(metakernel_path, kernels=kernels_dir)
     with spice.KernelPool(mk):
 
-        resolution = dt.timedelta(seconds=60)
+        resolution = dt.timedelta(seconds=30)
         times = [
             start_time + i * resolution
             for i in range(round((end_time - start_time) / resolution))
@@ -271,11 +274,13 @@ def overlay_trajectory(
 
     # Plotting
     colours = ["#F0E442", "#E69F00", "#56B4E9"]
-    fig = px.line(probabilities, x="Time", y=regions, color_discrete_sequence=colours)
+    time_series_fig = px.line(
+        probabilities, x="Time", y=regions, color_discrete_sequence=colours
+    )
 
-    fig.update_layout(template="simple_white")
+    time_series_fig.update_layout(template="simple_white")
 
-    fig.update_yaxes(title_text="Region Probability")
+    time_series_fig.update_yaxes(title_text="Region Probability")
 
     # We want to save these time series to a tmp filepath
     start_time = dt.datetime.strftime(start_time, "%Y%m%d_%H%M%S")
@@ -289,7 +294,112 @@ def overlay_trajectory(
 
     probabilities.to_csv(download_path, index=False)
 
-    return fig
+    # Trajectory panels
+    trajectory_fig = plotly.subplots.make_subplots(
+        rows=1, cols=3, subplot_titles=regions
+    )
+
+    cmap = plt.cm.get_cmap("viridis")
+    norm = matplotlib.colors.Normalize(vmin=0, vmax=1)
+
+    for i, region_name in enumerate(regions):
+
+        x_pairs = itertools.pairwise(trajectory["X MSM'"])
+        cyl_pairs = itertools.pairwise(trajectory["CYL MSM'"])
+
+        colours = [
+            matplotlib.colors.to_hex(cmap(norm(p))) for p in probabilities[region_name]
+        ]
+
+        for x, cyl, colour in zip(x_pairs, cyl_pairs, colours):
+            trajectory_fig.add_trace(
+                go.Scatter(
+                    x=x,
+                    y=cyl,
+                    mode="lines",
+                    line=dict(color=colour, width=10),
+                    showlegend=False,
+                ),
+                row=1,
+                col=i + 1,
+            )
+
+        # Add Mercury
+        circle_params = dict(
+            fillcolor="rgba(0,0,0,0)",
+            opacity=1,
+            line=dict(color="rgba(0,0,0,1)", width=3),
+            row=1,
+            col=i + 1,
+        )
+        trajectory_fig.add_shape(
+            type="circle",
+            xref="x",
+            yref="y",
+            x0=-1,
+            y0=-1 - hermpy.utils.Constants.DIPOLE_OFFSET_RADII,
+            x1=1,
+            y1=1 - hermpy.utils.Constants.DIPOLE_OFFSET_RADII,
+            **circle_params,
+        )
+        trajectory_fig.add_shape(
+            type="circle",
+            xref="x",
+            yref="y",
+            x0=-1,
+            y0=-1 + hermpy.utils.Constants.DIPOLE_OFFSET_RADII,
+            x1=1,
+            y1=1 + hermpy.utils.Constants.DIPOLE_OFFSET_RADII,
+            **circle_params,
+        )
+
+        # Add axis labels for each subplot
+        trajectory_fig.update_xaxes(
+            title_text=r"$X_{\rm MSM'} \quad \left[ \text{R}_\text{M} \right]$",
+            row=1,
+            col=i + 1,
+        )
+        trajectory_fig.update_yaxes(
+            title_text=r"$\left( Y_{\text{MSM'}}^2 + Z_{\text{MSM'}}^2 \right)^{0.5} \quad \left[ \text{R}_\text{M} \right]$",
+            row=1,
+            col=i + 1,
+        )
+
+        trajectory_fig.update_xaxes(range=[-5, 5])
+        trajectory_fig.update_yaxes(range=[0, 8])
+
+        trajectory_fig.update_layout(template="simple_white")
+
+        # Force equal aspect
+        trajectory_fig.update_yaxes(
+            scaleanchor=f"x{i+1}",
+            scaleratio=1,
+            row=1,
+            col=i + 1,
+        )
+
+        # Remove margins
+        trajectory_fig.update_xaxes(constrain="domain")
+        trajectory_fig.update_yaxes(constrain="domain")
+
+    # A fake scatter to add a colourbar
+    trajectory_fig.add_trace(
+        go.Scatter(
+            x=[None],
+            y=[None],
+            mode="markers",
+            marker=dict(
+                colorscale="Viridis",
+                cmin=0,
+                cmax=1,
+                color=[0, 1],
+                colorbar=dict(title=""),
+            ),
+            showlegend=False,
+        )
+    )
+
+    return time_series_fig, trajectory_fig
 
 
 def load_probability_maps(dropdown_value, grid_density):
@@ -353,7 +463,11 @@ def load_probability_maps(dropdown_value, grid_density):
         )
 
         # Add axis labels for each subplot
-        fig.update_xaxes(title_text=r"$X_{\rm MSM'}$ [$R_M$]", row=1, col=i + 1)
+        fig.update_xaxes(
+            title_text=r"$X_{\rm MSM'} \quad \left[ \text{R}_\text{M} \right]$",
+            row=1,
+            col=i + 1,
+        )
         fig.update_yaxes(
             title_text=r"$\left( Y_{\text{MSM'}}^2 + Z_{\text{MSM'}}^2 \right)^{0.5} \quad \left[ \text{R}_\text{M} \right]$",
             row=1,
@@ -370,6 +484,10 @@ def load_probability_maps(dropdown_value, grid_density):
             row=1,
             col=i + 1,
         )
+
+        # Remove margins
+        fig.update_xaxes(constrain="domain")
+        fig.update_yaxes(constrain="domain")
 
     return fig
 

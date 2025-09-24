@@ -41,12 +41,8 @@ probability_maps_layout = dash.html.Div(
     ]
 )
 
-app.layout = dash.html.Div(
+probability_time_series_layout = dash.html.Div(
     [
-        dash.html.H1(
-            children="BepiColombo Prediction Dashboard", style={"textAlign": "center"}
-        ),
-        probability_maps_layout,
         dash.html.P("Select a spacecraft to plot"),
         dash.dcc.Dropdown(
             ["MPO", "MMO"],
@@ -71,13 +67,24 @@ app.layout = dash.html.Div(
         dash.html.Div(
             [
                 dash.html.H4("Trajectory Overlay"),
-                dash.dcc.Graph(id="trajectory_overlay", mathjax=True),
+                dash.dcc.Graph(id="bepi_time_series", mathjax=True),
+                dash.dcc.Graph(id="bepi_trajectory", mathjax=True),
                 dash.html.Button(
                     "Download Time Series", id="download-time-series-button"
                 ),
                 dash.dcc.Download(id="download-time-series-csv"),
             ]
         ),
+    ]
+)
+
+app.layout = dash.html.Div(
+    [
+        dash.html.H1(
+            children="BepiColombo Prediction Dashboard", style={"textAlign": "center"}
+        ),
+        probability_maps_layout,
+        probability_time_series_layout,
     ]
 )
 
@@ -92,7 +99,10 @@ def load_probability_maps(dropdown_value, grid_density):
 
 
 @app.callback(
-    dash.Output("trajectory_overlay", "figure"),
+    [
+        dash.Output("bepi_time_series", "figure"),
+        dash.Output("bepi_trajectory", "figure"),
+    ],
     dash.Input("predict-button", "n_clicks"),
     dash.Input("crossing_list_choice", "value"),
     dash.Input("spacecraft_choice", "value"),
@@ -100,7 +110,7 @@ def load_probability_maps(dropdown_value, grid_density):
     dash.State("end_time", "value"),
     dash.Input("smooth-density", "value"),
 )
-def overlay_trajectory(
+def bepi_probabilities(
     n_clicks,
     crossing_list_selection,
     spacecraft_choice,
@@ -108,7 +118,7 @@ def overlay_trajectory(
     end_time,
     smooth_density,
 ):
-    return backend.overlay_trajectory(
+    return backend.bepi_probabilities(
         n_clicks,
         crossing_list_selection,
         spacecraft_choice,
@@ -141,4 +151,4 @@ def download_time_series(n_clicks, spacecraft, start_time, end_time):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run_server(host="0.0.0.0", port="8050", debug=False)
