@@ -18,6 +18,65 @@ import xarray as xr
 from planetary_coverage.spice import metakernel
 
 
+def plot_magnetospheric_boundaries(
+    fig,
+    row,
+    col,
+    sub_solar_magnetopause: float = 1.45,
+    alpha: float = 0.5,
+    psi: float = 1.04,
+    p: float = 2.75,
+    initial_x: float = 0.5,
+) -> None:
+
+    # Plotting magnetopause
+    phi = np.linspace(0, 2 * np.pi, 1000)
+    rho = sub_solar_magnetopause * (2 / (1 + np.cos(phi))) ** alpha
+
+    magnetopause_x_coords = rho * np.cos(phi)
+    magnetopause_y_coords = rho * np.sin(phi)
+
+    L = psi * p
+
+    rho = L / (1 + psi * np.cos(phi))
+
+    bow_shock_x_coords = initial_x + rho * np.cos(phi)
+    bow_shock_y_coords = rho * np.sin(phi)
+
+    # Bow shock functional form creates non-physical points far sunward of Mercury.
+    # These are incorrect and must be removed.
+    bow_shock_y_coords = bow_shock_y_coords[bow_shock_x_coords < 2]
+    bow_shock_x_coords = bow_shock_x_coords[bow_shock_x_coords < 2]
+
+    fig.add_trace(
+        go.Scatter(
+            x=magnetopause_x_coords,
+            y=magnetopause_y_coords,
+            mode="lines",
+            line=dict(
+                color="black",
+                dash="dot",
+            ),
+            showlegend=False,
+        ),
+        row=row,
+        col=col,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=bow_shock_x_coords,
+            y=bow_shock_y_coords,
+            mode="lines",
+            line=dict(
+                color="black",
+            ),
+            showlegend=False,
+        ),
+        row=row,
+        col=col,
+    )
+
+
 def get_heliocentric_distance(date: dt.datetime | dt.date | list[dt.datetime]) -> float:
     if isinstance(date, (dt.datetime, dt.date)):
         et = spice.str2et(date.strftime("%Y-%m-%d %H:%M:%S"))
@@ -90,6 +149,7 @@ def bepi_probabilities(
     spacecraft_selection,
     start_time,
     end_time,
+    time_cadence,
     grid_density,
 ):
 
@@ -121,7 +181,7 @@ def bepi_probabilities(
     mk = pc.MetaKernel(metakernel_path, kernels=kernels_dir)
     with spice.KernelPool(mk):
 
-        resolution = dt.timedelta(seconds=30)
+        resolution = dt.timedelta(seconds=int(time_cadence))
         times = [
             start_time + i * resolution
             for i in range(round((end_time - start_time) / resolution))
@@ -239,8 +299,13 @@ def bepi_probabilities(
         - selected_probability_map.coords["X"][0]
     )
 
-    x_bins = np.arange(-5, 5 + bin_size, bin_size)  # Radii
-    cyl_bins = np.arange(0, 8 + bin_size, bin_size)  # Radii
+    x_coords = selected_probability_map.coords["X"].values
+    cyl_coords = selected_probability_map.coords["CYL"].values
+
+    # Create bin edges (add one extra edge at the end for np.digitize)
+    # Resolves floating point precision issues
+    x_bins = np.concatenate([x_coords, [x_coords[-1] + bin_size]])
+    cyl_bins = np.concatenate([cyl_coords, [cyl_coords[-1] + bin_size]])
 
     # Digitize the trajectory data into bin indices
     x_indices = np.digitize(x_data, x_bins) - 1
@@ -260,7 +325,7 @@ def bepi_probabilities(
 
         else:
             for region in regions:
-                trajectory_probabilities[region][i] = selected_probability_map[i] = (
+                trajectory_probabilities[region][i] = (
                     np.nan
                 )  # Assign NaN if out of bounds
 
@@ -308,16 +373,34 @@ def bepi_probabilities(
         cyl_pairs = itertools.pairwise(trajectory["CYL MSM'"])
 
         colours = [
-            matplotlib.colors.to_hex(cmap(norm(p))) for p in probabilities[region_name]
+            matplotlib.colors.to_hex(cmap(norm(p))) if not np.isnan(p) else None for p in probabilities[region_name]
         ]
 
+        # Add light trajectory in grey
+        trajectory_fig.add_trace(
+            go.Scatter(
+                x=trajectory["X MSM'"],
+                y=trajectory["CYL MSM'"],
+                mode="lines",
+                line=dict(color="lightgrey", width=3),
+                showlegend=False,
+            ),
+            row=1,
+            col=i + 1
+        )
+
+        # Overlay with colour based on region prediction
         for x, cyl, colour in zip(x_pairs, cyl_pairs, colours):
+            
+            if colour is None:
+                continue
+
             trajectory_fig.add_trace(
                 go.Scatter(
                     x=x,
                     y=cyl,
                     mode="lines",
-                    line=dict(color=colour, width=10),
+                    line=dict(color=colour, width=6),
                     showlegend=False,
                 ),
                 row=1,
@@ -381,6 +464,9 @@ def bepi_probabilities(
         # Remove margins
         trajectory_fig.update_xaxes(constrain="domain")
         trajectory_fig.update_yaxes(constrain="domain")
+
+        # Add magnetospheric boundaries
+        plot_magnetospheric_boundaries(trajectory_fig, 1, i+1)
 
     # A fake scatter to add a colourbar
     trajectory_fig.add_trace(

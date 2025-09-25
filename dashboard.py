@@ -1,5 +1,4 @@
 import dash
-import dash_daq
 
 import backend
 
@@ -27,7 +26,7 @@ probability_maps_layout = dash.html.Div(
                 id="smooth-density",
                 tooltip={
                     "always_visible": False,
-                    "template": "Grid Density Multiplier",
+                    "template": "Bin Size: 0.25 / {value} radii",
                 },
             ),
             style={"width": "30pc"},
@@ -35,7 +34,9 @@ probability_maps_layout = dash.html.Div(
         dash.html.Div(
             [
                 dash.html.H4("Region Probability Maps"),
-                dash.dcc.Graph(id="probability_maps", mathjax=True),
+                dash.dcc.Loading(
+                    dash.dcc.Graph(id="probability_maps", mathjax=True),
+                ),
             ]
         ),
     ]
@@ -54,21 +55,34 @@ probability_time_series_layout = dash.html.Div(
             type="text",  # user types freely
             value="2023-06-19 18:30:00",
             placeholder="Start: YYYY-MM-DD HH:MM:SS",
-            style={"width": "250px"},
+            style={"width": "20pc"},
         ),
         dash.dcc.Input(
             id="end_time",
             type="text",  # user types freely
             value="2023-06-19 20:00:00",
             placeholder="End: YYYY-MM-DD HH:MM:SS",
-            style={"width": "250px"},
+            style={"width": "20pc"},
+        ),
+        dash.dcc.Input(
+            id="time-cadence",
+            type="text",
+            value="60",
+            placeholder="Time Cadence (seconds)",
+            style={"width": "10pc"},
         ),
         dash.html.Button("Predict", id="predict-button"),
         dash.html.Div(
             [
                 dash.html.H4("Trajectory Overlay"),
-                dash.dcc.Graph(id="bepi_time_series", mathjax=True),
-                dash.dcc.Graph(id="bepi_trajectory", mathjax=True),
+                dash.dcc.Loading(
+                    dash.html.Div(
+                        [
+                            dash.dcc.Graph(id="bepi_time_series", mathjax=True),
+                            dash.dcc.Graph(id="bepi_trajectory", mathjax=True),
+                        ]
+                    ),
+                ),
                 dash.html.Button(
                     "Download Time Series", id="download-time-series-button"
                 ),
@@ -108,6 +122,7 @@ def load_probability_maps(dropdown_value, grid_density):
     dash.Input("spacecraft_choice", "value"),
     dash.State("start_time", "value"),
     dash.State("end_time", "value"),
+    dash.State("time-cadence", "value"),
     dash.Input("smooth-density", "value"),
 )
 def bepi_probabilities(
@@ -116,6 +131,7 @@ def bepi_probabilities(
     spacecraft_choice,
     start_time,
     end_time,
+    time_cadence,
     smooth_density,
 ):
     return backend.bepi_probabilities(
@@ -124,6 +140,7 @@ def bepi_probabilities(
         spacecraft_choice,
         start_time,
         end_time,
+        time_cadence,
         smooth_density,
     )
 
@@ -151,4 +168,4 @@ def download_time_series(n_clicks, spacecraft, start_time, end_time):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port="8050", debug=False)
+    app.run(host="0.0.0.0", port="8050", debug=True)
