@@ -251,22 +251,6 @@ def bepi_probabilities(
                 / "region_maps_philpott.nc"
             )
 
-        case "90 < TAA < 270":
-            selected_probability_map = xr.load_dataset(
-                pathlib.Path(os.path.dirname(__file__))
-                / "create_probability_maps"
-                / "output"
-                / "region_maps_from_direct_input_taa_90_270.nc"
-            )
-
-        case "270 < TAA < 90":
-            selected_probability_map = xr.load_dataset(
-                pathlib.Path(os.path.dirname(__file__))
-                / "create_probability_maps"
-                / "output"
-                / "region_maps_from_direct_input_taa_n90_90.nc"
-            )
-
         case _:
             raise ValueError("Invalid dropdown selection")
 
@@ -512,22 +496,6 @@ def load_probability_maps(dropdown_value, grid_density):
                 / "create_probability_maps"
                 / "output"
                 / "region_maps_philpott.nc"
-            )
-
-        case "90 < TAA < 270":
-            selected_probability_map = xr.load_dataset(
-                pathlib.Path(os.path.dirname(__file__))
-                / "create_probability_maps"
-                / "output"
-                / "region_maps_from_direct_input_taa_90_270.nc"
-            )
-
-        case "270 < TAA < 90":
-            selected_probability_map = xr.load_dataset(
-                pathlib.Path(os.path.dirname(__file__))
-                / "create_probability_maps"
-                / "output"
-                / "region_maps_from_direct_input_taa_n90_90.nc"
             )
 
         case _:

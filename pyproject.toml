@@ -1,6 +1,6 @@
 [project]
 name = "bepi-prediction-dashboard"
-version = "0.1.0"
+version = "1.0.0"
 description = "A dashboard to predict magnetospheric region for the BepiColombo mission based on MESSENGER ephemeris data"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -12,6 +12,7 @@ dependencies = [
     "pandas>=2.3.3",
     "planetary-coverage>=1.2.0",
     "plotly>=6.3.0",
+    "waitress>=3.0.2",
     "xarray>=2025.9.1",
 ]
 
