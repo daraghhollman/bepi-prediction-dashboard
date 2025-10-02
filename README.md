@@ -32,7 +32,7 @@ curl 'https://zenodo.org/records/15797283/files/hollman_2025_crossing_list.csv?d
 
 Unfortunately, the Philpott crossing list is not available for automatic
 download. It must be manually downloaded from supporting information at:
-[](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2019JA027544)
+<https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2019JA027544>
 
 Download 'Table S1' and move to `./src/resources/philpott_2020.xlsx`
 
@@ -47,4 +47,4 @@ uv run python src/dashboard.py
 to automatically manage the environment, or, create a virtual environment and
 install the dependencies as listed in `pyproject.toml`.
 
-Access via: [](localhost:8050)
+Access via: <localhost:8050>
