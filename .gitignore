@@ -1,3 +1,4 @@
-/create_probability_maps/output/*
-/tmp/*
+*.csv
+*.xlsx
+src/tmp/*
 *.pyc

@@ -1,3 +1,3 @@
-[submodule "resources/spice"]
-	path = resources/spice
+[submodule "src/resources/spice"]
+	path = src/resources/spice
 	url = https://s2e2.cosmos.esa.int/bitbucket/scm/spice_kernels/bepicolombo.git
