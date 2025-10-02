@@ -1,6 +1,13 @@
 # BepiColombo Prediction Dashboard
 
-write a decription here
+This repository contains a dashboard for the visualisaton of magnetospheric
+region predictions for the two-spacecraft BepiColombo mission. These
+predictions are determined based on prediction region observations based on the
+Hollman et al. (submitted, 2025) and Philpott et al. (2020) bow shock and
+magnetopause crossing lists for the MESSENGER mission (2011-2015).
+
+This dashboard was written using [ploty](https://plotly.com/python/) and
+[dash](https://pypi.org/project/dash/).
 
 ## Installation
 
@@ -38,7 +45,7 @@ Download 'Table S1' and move to `./src/resources/philpott_2020.xlsx`
 
 ## Running
 
-Deploy locally with:
+Deploy locally with [uv](https://docs.astral.sh/uv/):
 
 ```shell
 uv run python src/dashboard.py
