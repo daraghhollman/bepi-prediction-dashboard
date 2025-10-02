@@ -8,7 +8,7 @@ probability_maps_layout = dash.html.Div(
     [
         dash.html.P("Choose a crossing list to construct region probability maps"),
         dash.dcc.Dropdown(
-            ["Hollman+ 2025", "Philpott+ 2020"],
+            ["Hollman+ 2025", "Philpott+ 2020", "270 < TAA < 90", "90 < TAA < 270"],
             "Hollman+ 2025",
             id="crossing_list_choice",
             clearable=False,

@@ -2,6 +2,7 @@ import datetime as dt
 import itertools
 import os
 import pathlib
+from typing import Iterable
 
 import hermpy.utils
 import matplotlib.colors
@@ -12,10 +13,8 @@ import planetary_coverage as pc
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.subplots
-import scipy.ndimage
 import spiceypy as spice
 import xarray as xr
-from planetary_coverage.spice import metakernel
 
 
 def plot_magnetospheric_boundaries(
@@ -28,7 +27,6 @@ def plot_magnetospheric_boundaries(
     p: float = 2.75,
     initial_x: float = 0.5,
 ) -> None:
-
     # Plotting magnetopause
     phi = np.linspace(0, 2 * np.pi, 1000)
     rho = sub_solar_magnetopause * (2 / (1 + np.cos(phi))) ** alpha
@@ -88,7 +86,6 @@ def get_heliocentric_distance(date: dt.datetime | dt.date | list[dt.datetime]) -
         return distance
 
     elif isinstance(date, Iterable):
-
         et = spice.datetime2et(date)
 
         positions, _ = spice.spkpos("MERCURY", et, "J2000", "NONE", "SUN")
@@ -152,7 +149,6 @@ def bepi_probabilities(
     time_cadence,
     grid_density,
 ):
-
     if n_clicks == 0:
         return
 
@@ -180,7 +176,6 @@ def bepi_probabilities(
 
     mk = pc.MetaKernel(metakernel_path, kernels=kernels_dir)
     with spice.KernelPool(mk):
-
         resolution = dt.timedelta(seconds=int(time_cadence))
         times = [
             start_time + i * resolution
@@ -220,7 +215,6 @@ def bepi_probabilities(
         }
 
         for day in trajectory_groups.keys():
-
             trajectory_group = trajectory_groups[day]
 
             aberrated_positions = np.array(
@@ -247,14 +241,30 @@ def bepi_probabilities(
                 pathlib.Path(os.path.dirname(__file__))
                 / "create_probability_maps"
                 / "output"
-                / f"region_maps_hollman.nc"
+                / "region_maps_hollman.nc"
             )
         case "Philpott+ 2020":
             selected_probability_map = xr.load_dataset(
                 pathlib.Path(os.path.dirname(__file__))
                 / "create_probability_maps"
                 / "output"
-                / f"region_maps_philpott.nc"
+                / "region_maps_philpott.nc"
+            )
+
+        case "90 < TAA < 270":
+            selected_probability_map = xr.load_dataset(
+                pathlib.Path(os.path.dirname(__file__))
+                / "create_probability_maps"
+                / "output"
+                / "region_maps_from_direct_input_taa_90_270.nc"
+            )
+
+        case "270 < TAA < 90":
+            selected_probability_map = xr.load_dataset(
+                pathlib.Path(os.path.dirname(__file__))
+                / "create_probability_maps"
+                / "output"
+                / "region_maps_from_direct_input_taa_n90_90.nc"
             )
 
         case _:
@@ -268,9 +278,9 @@ def bepi_probabilities(
     trajectory_probabilities = {
         region: np.zeros_like(x_data, dtype=float) for region in regions
     }
-    trajectory_probabilities_uncertainty = {
-        region: np.zeros_like(x_data, dtype=float) for region in regions
-    }
+    # trajectory_probabilities_uncertainty = {
+    #     region: np.zeros_like(x_data, dtype=float) for region in regions
+    # }
 
     # Interpolate if grid_density is not one
     bin_size = (
@@ -320,7 +330,7 @@ def bepi_probabilities(
         if 0 <= x_index < len(x_bins) - 1 and 0 <= cyl_index < len(cyl_bins) - 1:
             for region in regions:
                 trajectory_probabilities[region][i] = selected_probability_map[
-                    f"{region.replace(" ", "_").lower()}_mean"
+                    f"{region.replace(' ', '_').lower()}_mean"
                 ][x_index, cyl_index]
 
         else:
@@ -368,12 +378,12 @@ def bepi_probabilities(
     norm = matplotlib.colors.Normalize(vmin=0, vmax=1)
 
     for i, region_name in enumerate(regions):
-
         x_pairs = itertools.pairwise(trajectory["X MSM'"])
         cyl_pairs = itertools.pairwise(trajectory["CYL MSM'"])
 
         colours = [
-            matplotlib.colors.to_hex(cmap(norm(p))) if not np.isnan(p) else None for p in probabilities[region_name]
+            matplotlib.colors.to_hex(cmap(norm(p))) if not np.isnan(p) else None
+            for p in probabilities[region_name]
         ]
 
         # Add light trajectory in grey
@@ -386,12 +396,11 @@ def bepi_probabilities(
                 showlegend=False,
             ),
             row=1,
-            col=i + 1
+            col=i + 1,
         )
 
         # Overlay with colour based on region prediction
         for x, cyl, colour in zip(x_pairs, cyl_pairs, colours):
-            
             if colour is None:
                 continue
 
@@ -455,7 +464,7 @@ def bepi_probabilities(
 
         # Force equal aspect
         trajectory_fig.update_yaxes(
-            scaleanchor=f"x{i+1}",
+            scaleanchor=f"x{i + 1}",
             scaleratio=1,
             row=1,
             col=i + 1,
@@ -466,7 +475,7 @@ def bepi_probabilities(
         trajectory_fig.update_yaxes(constrain="domain")
 
         # Add magnetospheric boundaries
-        plot_magnetospheric_boundaries(trajectory_fig, 1, i+1)
+        plot_magnetospheric_boundaries(trajectory_fig, 1, i + 1)
 
     # A fake scatter to add a colourbar
     trajectory_fig.add_trace(
@@ -489,21 +498,36 @@ def bepi_probabilities(
 
 
 def load_probability_maps(dropdown_value, grid_density):
-
     match dropdown_value:
         case "Hollman+ 2025":
             selected_probability_map = xr.load_dataset(
                 pathlib.Path(os.path.dirname(__file__))
                 / "create_probability_maps"
                 / "output"
-                / f"region_maps_hollman.nc"
+                / "region_maps_hollman.nc"
             )
         case "Philpott+ 2020":
             selected_probability_map = xr.load_dataset(
                 pathlib.Path(os.path.dirname(__file__))
                 / "create_probability_maps"
                 / "output"
-                / f"region_maps_philpott.nc"
+                / "region_maps_philpott.nc"
+            )
+
+        case "90 < TAA < 270":
+            selected_probability_map = xr.load_dataset(
+                pathlib.Path(os.path.dirname(__file__))
+                / "create_probability_maps"
+                / "output"
+                / "region_maps_from_direct_input_taa_90_270.nc"
+            )
+
+        case "270 < TAA < 90":
+            selected_probability_map = xr.load_dataset(
+                pathlib.Path(os.path.dirname(__file__))
+                / "create_probability_maps"
+                / "output"
+                / "region_maps_from_direct_input_taa_n90_90.nc"
             )
 
         case _:
@@ -514,9 +538,8 @@ def load_probability_maps(dropdown_value, grid_density):
     fig = plotly.subplots.make_subplots(rows=1, cols=3, subplot_titles=regions)
 
     for i, region_name in enumerate(regions):
-
         data = selected_probability_map[
-            f"{region_name.replace(' ', "_").lower()}_mean"
+            f"{region_name.replace(' ', '_').lower()}_mean"
         ].T
 
         data.values[np.where(data.values == 0)] = np.nan
@@ -565,7 +588,7 @@ def load_probability_maps(dropdown_value, grid_density):
 
         # Force equal aspect
         fig.update_yaxes(
-            scaleanchor=f"x{i+1}",
+            scaleanchor=f"x{i + 1}",
             scaleratio=1,
             row=1,
             col=i + 1,

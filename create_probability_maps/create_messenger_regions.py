@@ -24,7 +24,6 @@ from hermpy import boundaries, mag, utils
 
 
 def main():
-
     # Make output directory
     os.makedirs(pathlib.Path(os.path.dirname(__file__)) / "output", exist_ok=True)
 
@@ -78,11 +77,10 @@ def main():
 
 
 def determine_regions_with_philpott(messenger_ephemeris):
-
     # Load Philpott crossing list
     crossings = boundaries.Load_Crossings(
         str(
-            pathlib.Path(os.path.dirname(__file__)) / f"../resources/philpott_2020.xlsx"
+            pathlib.Path(os.path.dirname(__file__)) / "../resources/philpott_2020.xlsx"
         ),
         include_data_gaps=False,
     )
@@ -199,7 +197,7 @@ def determine_regions_with_hollman(messenger_ephemeris):
     # Load Hollman et al. (in prep., 2025) crossing list
     crossings = pd.read_csv(
         pathlib.Path(os.path.dirname(__file__))
-        / f"../resources/hollman_2025_crossing_list.csv"
+        / "../resources/hollman_2025_crossing_list.csv"
     )
     crossings["Time"] = pd.to_datetime(crossings["Times"])
 
@@ -275,6 +273,7 @@ def determine_regions_with_hollman(messenger_ephemeris):
     predicted_spatial_regions = (
         ephemeris_with_crossings[
             [
+                "Time",
                 "Predicted Region",
                 "X MSM' (radii)",
                 "CYL MSM' (radii)",

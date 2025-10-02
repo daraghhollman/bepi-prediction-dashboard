@@ -23,20 +23,26 @@ from tqdm import tqdm
 
 
 def main():
-
     bootstrap = False
 
     # Assign crossing list based on input
-    chosen_crossing_list = sys.argv[1]
+    # This can also be a path to an alternative file to use
+    if os.path.exists(sys.argv[1]):
+        use_alt_file = True
+        region_observations = pd.read_csv(sys.argv[1])
+        chosen_crossing_list = None
 
-    assert chosen_crossing_list in ["hollman", "philpott"]
+    else:
+        use_alt_file = False
+        chosen_crossing_list = sys.argv[1]
+        assert chosen_crossing_list in ["hollman", "philpott"]
 
-    # Load messenger observations data
-    region_observations = pd.read_csv(
-        pathlib.Path(os.path.dirname(__file__))
-        / "output"
-        / f"messenger_region_observations_{chosen_crossing_list}.csv"
-    )
+        # Load messenger observations data
+        region_observations = pd.read_csv(
+            pathlib.Path(os.path.dirname(__file__))
+            / "output"
+            / f"messenger_region_observations_{chosen_crossing_list}.csv"
+        )
 
     # Create bins
     bin_size = 0.25
@@ -57,7 +63,6 @@ def main():
         ["Solar Wind", "Magnetosheath", "Magnetosphere"],
         ["solar_wind", "magnetosheath", "magnetosphere"],
     ):
-
         region_probability_maps = []
 
         for _ in tqdm(
@@ -65,7 +70,6 @@ def main():
             desc=f"Bootstrapping {region_name} Observations to Determine Uncertainties",
             disable=not bootstrap,
         ):
-
             if bootstrap:
                 observation_subset = region_observations.sample(
                     frac=bootstrap_fraction, replace=True
@@ -134,16 +138,26 @@ def main():
             )
 
     # Add other metadata
-    probability_map.attrs["Referenced crossing list"] = chosen_crossing_list
+    probability_map.attrs["Referenced crossing list"] = (
+        sys.argv[1] if use_alt_file else chosen_crossing_list
+    )
     probability_map.attrs["Date created"] = dt.datetime.today().__str__()
     probability_map.attrs["Bootstrapped"] = "True" if bootstrap else "False"
 
     # Save to NetCDF
-    output_file = (
-        pathlib.Path(os.path.dirname(__file__))
-        / "output"
-        / f"region_maps_{chosen_crossing_list}.nc"
-    )
+    if not use_alt_file:
+        output_file = (
+            pathlib.Path(os.path.dirname(__file__))
+            / "output"
+            / f"region_maps_{chosen_crossing_list}.nc"
+        )
+
+    else:
+        output_file = (
+            pathlib.Path(os.path.dirname(__file__))
+            / "output"
+            / "region_maps_from_direct_input.nc"
+        )
     probability_map.to_netcdf(output_file)
 
     loaded = xr.load_dataset(output_file)
