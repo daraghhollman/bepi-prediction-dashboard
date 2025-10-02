@@ -8,13 +8,13 @@ write a decription here
 
 **HTTPS**
 ```shell
-git clone --recurse-submodules --shallow-submodules https://github.com/daraghhollman/bepi-prediction-dashboard.git
+git clone --depth 1 --recurse-submodules --shallow-submodules https://github.com/daraghhollman/bepi-prediction-dashboard.git
 cd bepi-prediction-dashboard
 ```
 
 **SSH**
 ```shell
-git clone --recurse-submodules --shallow-submodules git@github.com:daraghhollman/bepi-prediction-dashboard.git
+git clone --depth 1 --recurse-submodules --shallow-submodules git@github.com:daraghhollman/bepi-prediction-dashboard.git
 cd bepi-prediction-dashboard
 ```
 
@@ -47,4 +47,4 @@ uv run python src/dashboard.py
 to automatically manage the environment, or, create a virtual environment and
 install the dependencies as listed in `pyproject.toml`.
 
-Access via: <localhost:8050>
+Access via: <http://localhost:8050>
