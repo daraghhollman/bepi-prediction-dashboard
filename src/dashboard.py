@@ -1,6 +1,14 @@
+import sys
+
 import dash
+import waitress
 
 import backend
+
+if len(sys.argv) == 2:
+    num_threads = int(sys.argv[1])
+else:
+    num_threads = 4  # waitress.serve default
 
 app = dash.Dash("BepiColombo Region Prediction")
 
@@ -8,7 +16,7 @@ probability_maps_layout = dash.html.Div(
     [
         dash.html.P("Choose a crossing list to construct region probability maps"),
         dash.dcc.Dropdown(
-            ["Hollman+ 2025", "Philpott+ 2020", "270 < TAA < 90", "90 < TAA < 270"],
+            ["Hollman+ 2025", "Philpott+ 2020"],
             "Hollman+ 2025",
             id="crossing_list_choice",
             clearable=False,
@@ -168,4 +176,4 @@ def download_time_series(n_clicks, spacecraft, start_time, end_time):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port="8050", debug=True)
+    waitress.serve(app.server, host="0.0.0.0", port=8050, threads=num_threads)
