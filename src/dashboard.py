@@ -51,8 +51,14 @@ probability_maps_layout = dash.html.Div(
             style={"width": "250px"},
             className="dropdown",
         ),
+        dash.dcc.Upload(
+            id="upload-probability-map",
+            children=dash.html.Div(
+                ["or ", dash.html.A("upload file", className="url")]
+            ),
+        ),
         dash.html.P(
-            "Choose a crossing list to construct region probability maps. These probability maps have been previously computed based on region predictions during the entire MESSENGER mission (sampled every 5 seconds). Two crossing lists are implimented, the Hollman et al. (submitted, 2025) crossing list, and the Philpott et al. (2020) crossing intervals list."
+            "Choose a crossing list to construct region probability maps. These probability maps have been previously computed based on region predictions during the entire MESSENGER mission (sampled every 5 seconds). Two crossing lists are implimented, the Hollman et al. (submitted, 2025) crossing list, and the Philpott et al. (2020) crossing intervals list. Probability maps may also be loaded from file provided they follow the correct format."
         ),
         # Smoothing
         dash.html.P("We can smooth these maps with simple linear interpolation."),
