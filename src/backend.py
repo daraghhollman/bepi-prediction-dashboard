@@ -319,9 +319,9 @@ def bepi_probabilities(
 
         else:
             for region in regions:
-                trajectory_probabilities[region][i] = (
-                    np.nan
-                )  # Assign NaN if out of bounds
+                trajectory_probabilities[region][
+                    i
+                ] = np.nan  # Assign NaN if out of bounds
 
     probabilities = pd.DataFrame(trajectory_probabilities)
     probabilities["Time"] = trajectory["Time"]
@@ -534,6 +534,14 @@ def load_probability_maps(dropdown_value, grid_density):
                 x=data.coords["X"],
                 y=data.coords["CYL"],
                 colorscale="greys_r",
+                showscale=(i == len(regions) - 1),
+                colorbar=(
+                    dict(
+                        title=dict(text="Region Probability", side="right"),
+                    )
+                    if i == len(regions) - 1
+                    else None
+                ),
             ),
             row=1,
             col=i + 1,

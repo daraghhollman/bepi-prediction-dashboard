@@ -1,6 +1,7 @@
 import sys
 
 import dash
+import dash_iconify as dicons
 import waitress
 
 import backend
@@ -10,20 +11,51 @@ if len(sys.argv) == 2:
 else:
     num_threads = 4  # waitress.serve default
 
-app = dash.Dash("BepiColombo Region Prediction")
+app = dash.Dash(
+    "DIAS BepiColombo Region Prediction",
+)
+
+about_layout = dash.html.Div(
+    [
+        dash.html.H1("About"),
+        dash.html.P(
+            "BepiColombo is a two-spacecraft mission due to arrive at Mercury in December 2026. When planning for spacecraft operations (e.g. instrument modes and/or pointing), it can be important for many science goals to determine within which magnetospheric region each of the spacecraft will be in. Previously, Mercury was orbited by the MESSENGER spacecraft between 2011 and 2015. Automated and manual methods have been applied to magnetometer data to determine where MESSENGER crossed the bow shock and magnetopause. Based on these crossing detections, we can determine whether MESSENGER was in the solar wind, the magnetosheath, or the magnetosphere. From these region determinations over the whole mission, we can construct probability maps to determine statistically how likely it is for a spacecraft to be in each region for a given location."
+        ),
+        dash.html.Div(
+            [
+                dash.dcc.Link(
+                    children=dicons.DashIconify(icon="ion:logo-github"),
+                    href="https://github.com/daraghhollman/bepi-prediction-dashboard",
+                    className="icon",
+                ),
+                dash.dcc.Link(
+                    children=dicons.DashIconify(icon="fluent:mail"),
+                    href="https://github.com/daraghhollman/bepi-prediction-dashboard",
+                    className="icon",
+                ),
+            ],
+            className="icon-container",
+        ),
+    ]
+)
 
 probability_maps_layout = dash.html.Div(
     [
-        dash.html.P("Choose a crossing list to construct region probability maps"),
+        dash.html.H1("Region Probability Maps"),
+        dash.html.H2("Select a probability map"),
         dash.dcc.Dropdown(
             ["Hollman+ 2025", "Philpott+ 2020"],
             "Hollman+ 2025",
             id="crossing_list_choice",
             clearable=False,
             style={"width": "250px"},
+            className="dropdown",
+        ),
+        dash.html.P(
+            "Choose a crossing list to construct region probability maps. These probability maps have been previously computed based on region predictions during the entire MESSENGER mission (sampled every 5 seconds). Two crossing lists are implimented, the Hollman et al. (submitted, 2025) crossing list, and the Philpott et al. (2020) crossing intervals list."
         ),
         # Smoothing
-        dash.html.P("We can smooth these maps with interpolation"),
+        dash.html.P("We can smooth these maps with simple linear interpolation."),
         dash.html.Div(
             dash.dcc.Slider(
                 min=1,
@@ -41,7 +73,6 @@ probability_maps_layout = dash.html.Div(
         ),
         dash.html.Div(
             [
-                dash.html.H4("Region Probability Maps"),
                 dash.dcc.Loading(
                     dash.dcc.Graph(id="probability_maps", mathjax=True),
                 ),
@@ -52,11 +83,17 @@ probability_maps_layout = dash.html.Div(
 
 probability_time_series_layout = dash.html.Div(
     [
-        dash.html.P("Select a spacecraft to plot"),
+        dash.html.H1("Prediction"),
         dash.dcc.Dropdown(
             ["MPO", "MMO"],
             "MPO",
             id="spacecraft_choice",
+            clearable=False,
+            style={"width": "250px"},
+            className="dropdown",
+        ),
+        dash.html.P(
+            "Select a BepiColombo spacecraft to query for. For times prior to planned orbital insersion (December 2026), MPO and MMO will both yeild the same result. Select a start time and end time (format: YYYY-MM-DD HH:MM:SS) and a time cadence to sample the trajectory (default: every 60 seconds). Please be patient for large queries with a small time cadence."
         ),
         dash.dcc.Input(
             id="start_time",
@@ -79,20 +116,29 @@ probability_time_series_layout = dash.html.Div(
             placeholder="Time Cadence (seconds)",
             style={"width": "10pc"},
         ),
-        dash.html.Button("Predict", id="predict-button"),
+        dash.html.Button("Predict", id="predict-button", className="button"),
         dash.html.Div(
             [
-                dash.html.H4("Trajectory Overlay"),
+                dash.html.H2("Trajectory Overlay"),
                 dash.dcc.Loading(
                     dash.html.Div(
                         [
-                            dash.dcc.Graph(id="bepi_time_series", mathjax=True),
                             dash.dcc.Graph(id="bepi_trajectory", mathjax=True),
                         ]
                     ),
                 ),
+                dash.html.H2("Extracted Time Series"),
+                dash.dcc.Loading(
+                    dash.html.Div(
+                        [
+                            dash.dcc.Graph(id="bepi_time_series", mathjax=True),
+                        ]
+                    ),
+                ),
                 dash.html.Button(
-                    "Download Time Series", id="download-time-series-button"
+                    "Download Time Series",
+                    id="download-time-series-button",
+                    className="button",
                 ),
                 dash.dcc.Download(id="download-time-series-csv"),
             ]
@@ -103,10 +149,13 @@ probability_time_series_layout = dash.html.Div(
 app.layout = dash.html.Div(
     [
         dash.html.H1(
-            children="BepiColombo Prediction Dashboard", style={"textAlign": "center"}
+            children="BepiColombo Prediction Dashboard",
+            style={"textAlign": "center"},
+            className="title",
         ),
-        probability_maps_layout,
-        probability_time_series_layout,
+        dash.html.Div(about_layout, className="card"),
+        dash.html.Div(probability_maps_layout, className="card"),
+        dash.html.Div(probability_time_series_layout, className="card"),
     ]
 )
 
@@ -176,4 +225,5 @@ def download_time_series(n_clicks, spacecraft, start_time, end_time):
 
 
 if __name__ == "__main__":
-    waitress.serve(app.server, host="0.0.0.0", port=8050, threads=num_threads)
+    # waitress.serve(app.server, host="0.0.0.0", port=8050, threads=num_threads)
+    app.run(debug=True)

@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "dash>=3.2.0",
+    "dash-iconify>=0.1.2",
     "hermpy",
     "numpy>=2.3.3",
     "openpyxl>=3.1.5",

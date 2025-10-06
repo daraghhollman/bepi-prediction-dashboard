@@ -8,6 +8,7 @@ version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "dash" },
+    { name = "dash-iconify" },
     { name = "hermpy" },
     { name = "numpy" },
     { name = "openpyxl" },
@@ -21,6 +22,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "dash", specifier = ">=3.2.0" },
+    { name = "dash-iconify", specifier = ">=0.1.2" },
     { name = "hermpy", git = "https://github.com/daraghhollman/hermpy" },
     { name = "numpy", specifier = ">=2.3.3" },
     { name = "openpyxl", specifier = ">=3.1.5" },
@@ -183,6 +185,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/80/37/8b5621e0a0b3c6e81a8b6cd3f033aa4b750f53e288dd1a494a887a8a06e9/dash-3.2.0.tar.gz", hash = "sha256:93300b9b99498f8b8ed267e61c455b4ee1282c7e4d4b518600eec87ce6ddea55", size = 7558708, upload-time = "2025-07-31T19:18:59.014Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d3/36/e0010483ca49b9bf6f389631ccea07b3ff6b678d14d8c7a0a4357860c36a/dash-3.2.0-py3-none-any.whl", hash = "sha256:4c1819588d83bed2cbcf5807daa5c2380c8c85789a6935a733f018f04ad8a6a2", size = 7900661, upload-time = "2025-07-31T19:18:50.679Z" },
+]
+
+[[package]]
+name = "dash-iconify"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/49/d2/03483ed3278cd476c34064bec43675fb6da84a6908e995a699eed76ab32d/dash_iconify-0.1.2.tar.gz", hash = "sha256:564774be6b11b0ac3a8999b7137c3d17a1d351d69b673aa313c7228eacc9d143", size = 17347, upload-time = "2022-04-21T14:40:00.794Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/63/f10cc18533cc9ab899ea81deca9759b3eebe47d01ad95c4e67b6acdada97/dash_iconify-0.1.2-py3-none-any.whl", hash = "sha256:9ab0eda19bb4514e177bf1f8f36947bb9e5b44aba6ce947f22a1cf0f1a45fc14", size = 18928, upload-time = "2022-04-21T14:39:57.491Z" },
 ]
 
 [[package]]
